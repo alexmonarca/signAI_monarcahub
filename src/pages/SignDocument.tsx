@@ -269,7 +269,7 @@ export default function SignDocument({ profile }: SignDocumentProps) {
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Visualização do Documento</span>
                 <span className="text-xs text-slate-400">Página 1 de 1</span>
               </div>
-              <div className="flex-1 p-12 flex flex-col items-center justify-center text-center space-y-6 overflow-y-auto max-h-[800px]">
+              <div className="flex-1 p-8 md:p-12 flex flex-col items-center justify-start space-y-6 overflow-y-auto max-h-[800px] scroll-smooth">
                 {doc?.content ? (
                   <div className="text-left w-full space-y-4">
                     <h3 className="text-xl font-bold text-slate-900 border-b pb-4 mb-6">{doc.title}</h3>
