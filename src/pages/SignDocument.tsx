@@ -79,7 +79,12 @@ export default function SignDocument({ profile }: SignDocumentProps) {
         alert('Por favor, faça sua assinatura primeiro.');
         return;
       }
-      signatureData = sigPad.current?.getTrimmedCanvas().toDataURL('image/png');
+      try {
+        signatureData = sigPad.current?.getTrimmedCanvas().toDataURL('image/png');
+      } catch (err) {
+        console.warn('getTrimmedCanvas failed, falling back to raw canvas:', err);
+        signatureData = sigPad.current?.getCanvas().toDataURL('image/png');
+      }
     } else if (signMethod === 'upload') {
       if (!uploadedSign) {
         alert('Por favor, faça o upload do documento assinado.');

@@ -37,6 +37,8 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
   const [inviteEmail, setInviteEmail] = useState('');
   const [isInviting, setIsInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState(false);
+  const [isSendingCopy, setIsSendingCopy] = useState(false);
+  const [copySent, setCopySent] = useState(false);
 
   useEffect(() => {
     if (id) fetchDocument();
@@ -96,6 +98,32 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
       alert('Erro ao convidar signatário.');
     } finally {
       setIsInviting(false);
+    }
+  };
+
+  const handleSendCopyManually = async () => {
+    if (!document?.signer_email) return;
+    setIsSendingCopy(true);
+    try {
+      await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          document_id: id,
+          document_title: document.title,
+          signed_at: document.signed_at || new Date().toISOString(),
+          send_copy_to: document.signer_email,
+          is_copy_request: true,
+          manual_send: true
+        })
+      });
+      setCopySent(true);
+      setTimeout(() => setCopySent(false), 3000);
+    } catch (err) {
+      console.error('Error sending copy:', err);
+      alert('Erro ao enviar cópia.');
+    } finally {
+      setIsSendingCopy(false);
     }
   };
 
@@ -344,6 +372,18 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
                         </p>
                       </div>
                     )}
+
+                    <button
+                      onClick={handleSendCopyManually}
+                      disabled={isSendingCopy || copySent}
+                      className={`w-full py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${
+                        copySent ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'btn-secondary'
+                      }`}
+                    >
+                      {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin" /> : 
+                       copySent ? <CheckCircle2 className="w-4 h-4" /> : <Mail className="w-4 h-4" />}
+                      {copySent ? 'Cópia Enviada!' : 'Reenviar Cópia ao Signatário'}
+                    </button>
                   </div>
                 </motion.div>
               )}
