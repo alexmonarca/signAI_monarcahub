@@ -104,20 +104,29 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
   const handleSendCopyManually = async () => {
     if (!document?.signer_email) return;
     setIsSendingCopy(true);
+    
+    const manualPayload = {
+      document_id: id,
+      document_title: document.title,
+      signed_at: document.signed_at || new Date().toISOString(),
+      send_copy_to: document.signer_email,
+      is_copy_request: true,
+      manual_send: true
+    };
+
+    console.log('Enviando reenvio manual de cópia:', manualPayload);
+
     try {
       // 1. Send webhook
-      await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
+      const response = await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          document_id: id,
-          document_title: document.title,
-          signed_at: document.signed_at || new Date().toISOString(),
-          send_copy_to: document.signer_email,
-          is_copy_request: true,
-          manual_send: true
-        })
+        body: JSON.stringify(manualPayload)
       });
+
+      if (!response.ok) {
+        console.warn('Webhook de reenvio manual respondeu com erro:', response.status);
+      }
 
       // 2. Update database
       await supabase

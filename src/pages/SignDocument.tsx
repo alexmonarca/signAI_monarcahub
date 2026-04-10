@@ -119,20 +119,30 @@ export default function SignDocument({ profile }: SignDocumentProps) {
       if (error) throw error;
       
       // Notify owner via webhook
+      const webhookPayload = {
+        document_id: id,
+        document_title: doc?.title,
+        signed_at: signedAt,
+        signature_method: signatureMethod,
+        signature_details: signatureDetails,
+        owner_id: doc?.owner_id,
+        signer_email: profile?.email || 'Public User'
+      };
+      
+      console.log('Enviando webhook de assinatura:', webhookPayload);
+
       try {
-        await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
+        const response = await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            document_id: id,
-            document_title: doc?.title,
-            signed_at: signedAt,
-            signature_method: signatureMethod,
-            signature_details: signatureDetails,
-            owner_id: doc?.owner_id,
-            signer_email: profile?.email || 'Public User'
-          })
+          body: JSON.stringify(webhookPayload)
         });
+        
+        if (!response.ok) {
+          console.warn('Webhook respondeu com erro:', response.status);
+        } else {
+          console.log('Webhook de notificação enviado com sucesso');
+        }
       } catch (webhookErr) {
         console.warn('Failed to notify owner via webhook:', webhookErr);
       }
@@ -191,19 +201,28 @@ export default function SignDocument({ profile }: SignDocumentProps) {
   const handleSendCopy = async () => {
     if (!copyEmail) return;
     setIsSendingCopy(true);
+    
+    const copyPayload = {
+      document_id: id,
+      document_title: doc?.title,
+      signed_at: new Date().toISOString(),
+      send_copy_to: copyEmail,
+      is_copy_request: true
+    };
+
+    console.log('Solicitando cópia via webhook:', copyPayload);
+
     try {
       // 1. Notify owner/signer via webhook
-      await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
+      const response = await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          document_id: id,
-          document_title: doc?.title,
-          signed_at: new Date().toISOString(),
-          send_copy_to: copyEmail,
-          is_copy_request: true
-        })
+        body: JSON.stringify(copyPayload)
       });
+
+      if (!response.ok) {
+        console.warn('Webhook de cópia respondeu com erro:', response.status);
+      }
 
       // 2. Update database to track that copy was requested
       await supabase
