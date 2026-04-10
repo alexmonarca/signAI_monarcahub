@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,15 @@ export default function Auth() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: {
+            data: {
+              full_name: fullName
+            }
+          }
+        });
         if (error) throw error;
         alert('Verifique seu email para confirmar o cadastro!');
       } else {
@@ -65,6 +74,22 @@ export default function Auth() {
           )}
 
           <form onSubmit={handleAuth} className="space-y-4">
+            {isSignUp && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome Completo</label>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="text"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none"
+                    placeholder="Seu Nome"
+                  />
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
               <div className="relative">

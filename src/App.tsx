@@ -49,7 +49,13 @@ export default function App() {
           console.log('Profile not found, attempting to create...');
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
-            .insert([{ id: userId, email: session?.user.email, plan: 'free', docs_this_month: 0 }])
+            .insert([{ 
+              id: userId, 
+              email: session?.user.email, 
+              full_name: session?.user.user_metadata?.full_name,
+              plan: 'free', 
+              docs_this_month: 0 
+            }])
             .select()
             .single();
           
@@ -106,7 +112,7 @@ export default function App() {
         />
         <Route 
           path="/sign/:id" 
-          element={session ? <SignDocument profile={profile} /> : <Navigate to="/auth" />} 
+          element={<SignDocument profile={profile} />} 
         />
         <Route 
           path="/settings" 

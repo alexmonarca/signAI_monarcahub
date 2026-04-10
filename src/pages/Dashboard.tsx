@@ -115,7 +115,12 @@ export default function Dashboard({ profile }: DashboardProps) {
         .from('documents')
         .upload(filePath, file);
 
-      if (!uploadError) {
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        if (uploadError.message.includes('bucket not found')) {
+          alert('Aviso: O bucket "documents" não foi encontrado no Supabase Storage. O arquivo original não será salvo para download, apenas o texto extraído.');
+        }
+      } else {
         const { data: { publicUrl } } = supabase.storage
           .from('documents')
           .getPublicUrl(filePath);
@@ -190,15 +195,15 @@ export default function Dashboard({ profile }: DashboardProps) {
       });
 
       if (response.ok) {
-        alert('E-mail enviado com sucesso via n8n!');
+        alert('E-mail enviado com sucesso!');
         setShareDoc(null);
         setShareEmail('');
       } else {
-        alert('Erro ao enviar e-mail via webhook.');
+        alert('Erro ao enviar e-mail.');
       }
     } catch (err) {
       console.error('Error sending email via webhook:', err);
-      alert('Erro ao conectar com o serviço de e-mail (n8n).');
+      alert('Erro ao conectar com o serviço de e-mail.');
     } finally {
       setIsSendingEmail(false);
     }

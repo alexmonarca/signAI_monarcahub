@@ -37,6 +37,7 @@ export default function SignDocument({ profile }: SignDocumentProps) {
   const [docNumber, setDocNumber] = useState('');
   const [isAiExpanded, setIsAiExpanded] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSigned, setIsSigned] = useState(false);
   const sigPad = useRef<any>(null);
 
   useEffect(() => {
@@ -53,14 +54,6 @@ export default function SignDocument({ profile }: SignDocumentProps) {
 
       if (error) throw error;
       
-      // Check if user is authorized to sign
-      const userEmail = profile?.email;
-      if (data.owner_id !== profile?.id && data.signer_email !== userEmail) {
-        alert('Você não tem permissão para assinar este documento.');
-        navigate('/dashboard');
-        return;
-      }
-
       setDoc(data);
     } catch (err) {
       console.error('Error fetching document:', err);
@@ -110,10 +103,13 @@ export default function SignDocument({ profile }: SignDocumentProps) {
 
       if (error) throw error;
       
-      // Success animation/feedback
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
+      setIsSigned(true);
+      // Only navigate if user is logged in
+      if (profile) {
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      }
     } catch (err) {
       console.error('Error saving signature:', err);
       alert('Erro ao salvar assinatura.');
@@ -157,6 +153,36 @@ export default function SignDocument({ profile }: SignDocumentProps) {
       setIsAnalyzing(false);
     }
   };
+
+  if (isSigned) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white p-12 rounded-3xl shadow-xl text-center max-w-md w-full"
+        >
+          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Check className="w-10 h-10 text-emerald-500" />
+          </div>
+          <h2 className="text-3xl font-display font-bold text-slate-900 mb-4">Documento Assinado!</h2>
+          <p className="text-slate-600 mb-8">
+            Sua assinatura foi processada com sucesso. O proprietário do documento será notificado.
+          </p>
+          {!profile && (
+            <Link to="/auth" className="btn-primary w-full py-3 block">
+              Criar minha conta grátis
+            </Link>
+          )}
+          {profile && (
+            <Link to="/dashboard" className="btn-primary w-full py-3 block">
+              Voltar ao Painel
+            </Link>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
