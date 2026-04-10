@@ -14,10 +14,12 @@ import {
   Calendar,
   User,
   ShieldCheck,
-  Zap
+  Zap,
+  Download
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Sidebar from '../components/Sidebar';
+import { handleDocumentDownload } from '../lib/download';
 
 interface DocumentDetailsProps {
   profile: UserProfile | null;
@@ -56,10 +58,11 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!document || !inviteEmail) return;
+    if (!document || !inviteEmail || !profile) return;
 
     setIsInviting(true);
     try {
+      // 1. Update database
       const { error } = await supabase
         .from('documents')
         .update({ signer_email: inviteEmail })
@@ -67,11 +70,26 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
 
       if (error) throw error;
       
+      // 2. Send email via n8n webhook
+      const shareLink = `${window.location.origin}/#/sign/${document.id}`;
+      await fetch('https://webhook.monarcahub.com/webhook/enviar-compartilhamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email_destinatario: inviteEmail,
+          link_assinatura: shareLink,
+          nome_documento: document.title,
+          remetente_nome: profile.full_name || profile.email,
+          remetente_email: profile.email
+        })
+      });
+
       setInviteSuccess(true);
       setDocument({ ...document, signer_email: inviteEmail });
       setTimeout(() => setInviteSuccess(false), 3000);
     } catch (err) {
       console.error('Error inviting signer:', err);
+      alert('Erro ao convidar signatário.');
     } finally {
       setIsInviting(false);
     }
@@ -102,6 +120,14 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
               <ArrowLeft className="w-4 h-4" /> Voltar ao Painel
             </button>
             <div className="flex items-center gap-3">
+              <button 
+                onClick={() => document && handleDocumentDownload(document)}
+                className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-all flex items-center gap-2"
+                title="Baixar Documento"
+              >
+                <Download className="w-5 h-5" />
+                <span className="text-xs font-bold">Baixar PDF</span>
+              </button>
               <button className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-all">
                 <Share2 className="w-5 h-5" />
               </button>

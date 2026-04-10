@@ -31,6 +31,7 @@ import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { extractTextFromPDF, analyzeContract } from '../lib/ai';
+import { handleDocumentDownload } from '../lib/download';
 
 interface DashboardProps {
   profile: UserProfile | null;
@@ -103,8 +104,25 @@ export default function Dashboard({ profile }: DashboardProps) {
     try {
       let content = '';
       let aiAnalysis = null;
+      let fileUrl = '';
 
-      // Check if it's a PDF by extension if type is missing
+      // 1. Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${profile.id}/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('documents')
+          .getPublicUrl(filePath);
+        fileUrl = publicUrl;
+      }
+
+      // 2. Extract text and analyze if PDF
       const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
       if (isPDF) {
@@ -127,7 +145,8 @@ export default function Dashboard({ profile }: DashboardProps) {
           title: file.name,
           status: 'pending',
           content: content,
-          ai_analysis: aiAnalysis
+          ai_analysis: aiAnalysis,
+          file_url: fileUrl
         }])
         .select()
         .single();
@@ -151,48 +170,35 @@ export default function Dashboard({ profile }: DashboardProps) {
   };
 
   const handleSendEmail = async () => {
-    if (!shareEmail || !shareDoc) return;
+    if (!shareEmail || !shareDoc || !profile) return;
     
     setIsSendingEmail(true);
+    // Using HashRouter format for the link
+    const shareLink = `${window.location.origin}/#/sign/${shareDoc.id}`;
+    
     try {
-      const response = await fetch('/api/send-email', {
+      const response = await fetch('https://webhook.monarcahub.com/webhook/enviar-compartilhamento', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: shareEmail,
-          subject: `Assinatura Pendente: ${shareDoc.title}`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px;">
-              <h2 style="color: #0f172a;">Olá!</h2>
-              <p style="color: #475569; line-height: 1.6;">
-                Você foi convidado para assinar o documento <strong>${shareDoc.title}</strong> através da plataforma Sign AI.
-              </p>
-              <div style="margin: 30px 0; text-align: center;">
-                <a href="${window.location.origin}/sign/${shareDoc.id}" 
-                   style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                  Ver e Assinar Agora
-                </a>
-              </div>
-              <p style="color: #94a3b8; font-size: 12px;">
-                Se o botão acima não funcionar, copie e cole este link no seu navegador:<br>
-                ${window.location.origin}/sign/${shareDoc.id}
-              </p>
-            </div>
-          `
+          email_destinatario: shareEmail,
+          link_assinatura: shareLink,
+          nome_documento: shareDoc.title,
+          remetente_nome: profile.full_name || profile.email,
+          remetente_email: profile.email
         })
       });
 
       if (response.ok) {
-        alert('E-mail enviado com sucesso!');
+        alert('E-mail enviado com sucesso via n8n!');
         setShareDoc(null);
         setShareEmail('');
       } else {
-        const error = await response.json();
-        alert(`Erro ao enviar e-mail: ${error.error || 'Erro desconhecido'}`);
+        alert('Erro ao enviar e-mail via webhook.');
       }
     } catch (err) {
-      console.error('Error sending email:', err);
-      alert('Erro ao conectar com o serviço de e-mail.');
+      console.error('Error sending email via webhook:', err);
+      alert('Erro ao conectar com o serviço de e-mail (n8n).');
     } finally {
       setIsSendingEmail(false);
     }
@@ -215,13 +221,7 @@ export default function Dashboard({ profile }: DashboardProps) {
   };
 
   const handleDownload = (doc: Document) => {
-    const blob = new Blob([doc.content || ''], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${doc.title}.txt`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    handleDocumentDownload(doc);
   };
 
   const getStatusIcon = (status: string) => {
@@ -541,7 +541,7 @@ export default function Dashboard({ profile }: DashboardProps) {
               {/* Link Sharing */}
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/sign/${shareDoc.id}`);
+                  navigator.clipboard.writeText(`${window.location.origin}/#/sign/${shareDoc.id}`);
                   alert('Link copiado para a área de transferência!');
                 }}
                 className="w-full flex items-center gap-4 p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group"

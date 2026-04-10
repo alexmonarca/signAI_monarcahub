@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { analyzeContract } from '../lib/ai';
+import { handleDocumentDownload } from '../lib/download';
 
 interface SignDocumentProps {
   profile: UserProfile | null;
@@ -179,7 +180,10 @@ export default function SignDocument({ profile }: SignDocumentProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-secondary py-1.5 px-4 text-sm flex items-center gap-2">
+          <button 
+            onClick={() => doc && handleDocumentDownload(doc)}
+            className="btn-secondary py-1.5 px-4 text-sm flex items-center gap-2"
+          >
             <Download className="w-4 h-4" /> Baixar Original
           </button>
         </div>
