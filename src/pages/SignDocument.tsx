@@ -16,7 +16,8 @@ import {
   FileUp,
   ChevronDown,
   ChevronUp,
-  Fingerprint
+  Fingerprint,
+  Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { analyzeContract } from '../lib/ai';
@@ -38,6 +39,9 @@ export default function SignDocument({ profile }: SignDocumentProps) {
   const [isAiExpanded, setIsAiExpanded] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
+  const [copyEmail, setCopyEmail] = useState('');
+  const [isSendingCopy, setIsSendingCopy] = useState(false);
+  const [copySent, setCopySent] = useState(false);
   const sigPad = useRef<any>(null);
 
   useEffect(() => {
@@ -91,18 +95,43 @@ export default function SignDocument({ profile }: SignDocumentProps) {
     }
 
     setIsSaving(true);
+    const signatureMethod = signMethod;
+    const signatureDetails = signMethod === 'document' ? docNumber : (signMethod === 'upload' ? 'Uploaded File' : 'Hand drawn');
 
     try {
+      const signedAt = new Date().toISOString();
       const { error } = await supabase
         .from('documents')
         .update({ 
           status: 'signed',
-          signature_data: signatureData
+          signature_data: signatureData,
+          signed_at: signedAt,
+          signature_method: signatureMethod,
+          signature_details: signatureDetails
         })
         .eq('id', id);
 
       if (error) throw error;
       
+      // Notify owner via webhook
+      try {
+        await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            document_id: id,
+            document_title: doc?.title,
+            signed_at: signedAt,
+            signature_method: signatureMethod,
+            signature_details: signatureDetails,
+            owner_id: doc?.owner_id,
+            signer_email: profile?.email || 'Public User'
+          })
+        });
+      } catch (webhookErr) {
+        console.warn('Failed to notify owner via webhook:', webhookErr);
+      }
+
       setIsSigned(true);
       // Only navigate if user is logged in
       if (profile) {
@@ -154,6 +183,30 @@ export default function SignDocument({ profile }: SignDocumentProps) {
     }
   };
 
+  const handleSendCopy = async () => {
+    if (!copyEmail) return;
+    setIsSendingCopy(true);
+    try {
+      await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          document_id: id,
+          document_title: doc?.title,
+          signed_at: new Date().toISOString(),
+          send_copy_to: copyEmail,
+          is_copy_request: true
+        })
+      });
+      setCopySent(true);
+    } catch (err) {
+      console.error('Error sending copy:', err);
+      alert('Erro ao solicitar cópia.');
+    } finally {
+      setIsSendingCopy(false);
+    }
+  };
+
   if (isSigned) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -169,6 +222,39 @@ export default function SignDocument({ profile }: SignDocumentProps) {
           <p className="text-slate-600 mb-8">
             Sua assinatura foi processada com sucesso. O proprietário do documento será notificado.
           </p>
+
+          {!copySent ? (
+            <div className="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100 text-left">
+              <h4 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <Mail className="w-4 h-4 text-blue-500" />
+                Deseja receber uma cópia?
+              </h4>
+              <p className="text-xs text-slate-500 mb-4">
+                Informe seu e-mail abaixo para receber o documento assinado.
+              </p>
+              <div className="flex gap-2">
+                <input 
+                  type="email" 
+                  placeholder="seu@email.com"
+                  value={copyEmail}
+                  onChange={(e) => setCopyEmail(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                />
+                <button 
+                  onClick={handleSendCopy}
+                  disabled={isSendingCopy || !copyEmail}
+                  className="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-50"
+                >
+                  {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Enviar'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-8 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 text-sm flex items-center gap-2 justify-center">
+              <Check className="w-4 h-4" /> Cópia solicitada com sucesso!
+            </div>
+          )}
+
           {!profile && (
             <Link to="/auth" className="btn-primary w-full py-3 block">
               Criar minha conta grátis

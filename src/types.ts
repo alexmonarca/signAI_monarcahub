@@ -23,6 +23,9 @@ export interface Document {
     attention_points: string[];
   };
   signature_data?: string;
+  signed_at?: string;
+  signature_method?: 'draw' | 'upload' | 'document';
+  signature_details?: string;
 }
 
 export const PLAN_LIMITS = {

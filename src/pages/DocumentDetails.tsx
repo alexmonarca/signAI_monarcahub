@@ -15,7 +15,11 @@ import {
   User,
   ShieldCheck,
   Zap,
-  Download
+  Download,
+  Clock,
+  Fingerprint,
+  PenTool,
+  Upload as UploadIcon
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Sidebar from '../components/Sidebar';
@@ -285,12 +289,64 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-slate-900 truncate">{document.signer_email}</p>
-                        <p className="text-[10px] text-slate-500">Aguardando assinatura</p>
+                        <p className="text-[10px] text-slate-500">
+                          {document.status === 'signed' ? 'Documento Assinado' : 'Aguardando assinatura'}
+                        </p>
                       </div>
                     </div>
                   </div>
                 )}
               </motion.div>
+
+              {/* Signature Analytics Card */}
+              {document.status === 'signed' && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm"
+                >
+                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600" /> Detalhes da Assinatura
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        <span className="text-xs text-slate-500">Data/Hora</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-900">
+                        {document.signed_at ? new Date(document.signed_at).toLocaleString('pt-BR') : 'N/A'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        {document.signature_method === 'draw' ? <PenTool className="w-4 h-4 text-slate-400" /> :
+                         document.signature_method === 'document' ? <Fingerprint className="w-4 h-4 text-slate-400" /> :
+                         <UploadIcon className="w-4 h-4 text-slate-400" />}
+                        <span className="text-xs text-slate-500">Método</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-900 uppercase">
+                        {document.signature_method === 'draw' ? 'Rabisco Digital' :
+                         document.signature_method === 'document' ? 'CPF/CNPJ' : 'Upload de Arquivo'}
+                      </span>
+                    </div>
+
+                    {document.signature_details && (
+                      <div className="p-3 bg-slate-50 rounded-xl">
+                        <div className="flex items-center gap-2 mb-1">
+                          <ShieldCheck className="w-4 h-4 text-slate-400" />
+                          <span className="text-xs text-slate-500">Identificador</span>
+                        </div>
+                        <p className="text-xs font-mono font-bold text-slate-900 truncate">
+                          {document.signature_details}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Security Info */}
               <div className="bg-slate-900 rounded-3xl p-6 text-white">
