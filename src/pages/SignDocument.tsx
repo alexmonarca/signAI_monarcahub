@@ -222,62 +222,64 @@ export default function SignDocument({ profile }: SignDocumentProps) {
 
   if (isSigned) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white p-12 rounded-3xl shadow-xl text-center max-w-md w-full"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white p-6 md:p-12 rounded-3xl shadow-xl text-center max-w-md w-full my-auto"
         >
-          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-emerald-500" />
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Check className="w-8 h-8 md:w-10 md:h-10 text-emerald-500" />
           </div>
-          <h2 className="text-3xl font-display font-bold text-slate-900 mb-4">Documento Assinado!</h2>
-          <p className="text-slate-600 mb-8">
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-4">Documento Assinado!</h2>
+          <p className="text-sm md:text-base text-slate-600 mb-8">
             Sua assinatura foi processada com sucesso. O proprietário do documento será notificado.
           </p>
 
           {!copySent ? (
-            <div className="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100 text-left">
+            <div className="mb-8 p-4 md:p-6 bg-slate-50 rounded-2xl border border-slate-100 text-left">
               <h4 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
                 <Mail className="w-4 h-4 text-blue-500" />
                 Deseja receber uma cópia?
               </h4>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-[10px] md:text-xs text-slate-500 mb-4">
                 Informe seu e-mail abaixo para receber o documento assinado.
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2">
                 <input 
                   type="email" 
                   placeholder="seu@email.com"
                   value={copyEmail}
                   onChange={(e) => setCopyEmail(e.target.value)}
-                  className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                 />
                 <button 
                   onClick={handleSendCopy}
                   disabled={isSendingCopy || !copyEmail}
-                  className="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-50 whitespace-nowrap"
                 >
-                  {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Enviar'}
+                  {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Enviar Cópia'}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="mb-8 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 text-sm flex items-center gap-2 justify-center">
+            <div className="mb-8 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 text-xs md:text-sm flex items-center gap-2 justify-center">
               <Check className="w-4 h-4" /> Cópia solicitada com sucesso!
             </div>
           )}
 
-          {!profile && (
-            <Link to="/auth" className="btn-primary w-full py-3 block">
-              Criar minha conta grátis
-            </Link>
-          )}
-          {profile && (
-            <Link to="/dashboard" className="btn-primary w-full py-3 block">
-              Voltar ao Painel
-            </Link>
-          )}
+          <div className="space-y-3">
+            {!profile && (
+              <Link to="/auth" className="btn-primary w-full py-3 block text-sm">
+                Criar minha conta grátis
+              </Link>
+            )}
+            {profile && (
+              <Link to="/dashboard" className="btn-primary w-full py-3 block text-sm">
+                Voltar ao Painel
+              </Link>
+            )}
+          </div>
         </motion.div>
       </div>
     );
@@ -292,32 +294,32 @@ export default function SignDocument({ profile }: SignDocumentProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 overflow-x-hidden">
       {/* Header */}
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
-        <div className="flex items-center gap-4">
+      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
+        <div className="flex items-center gap-2 md:gap-4">
           <Link to="/dashboard" className="p-2 hover:bg-slate-50 rounded-lg transition-colors">
             <ArrowLeft className="w-5 h-5 text-slate-500" />
           </Link>
-          <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-slate-400" />
-            <h2 className="font-bold text-slate-900">{doc?.title}</h2>
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText className="w-5 h-5 text-slate-400 shrink-0" />
+            <h2 className="font-bold text-slate-900 truncate text-sm md:text-base">{doc?.title}</h2>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <button 
             onClick={() => doc && handleDocumentDownload(doc)}
-            className="btn-secondary py-1.5 px-4 text-sm flex items-center gap-2"
+            className="btn-secondary py-1.5 px-3 md:px-4 text-[10px] md:text-sm flex items-center gap-2 whitespace-nowrap"
           >
-            <Download className="w-4 h-4" /> Baixar Original
+            <Download className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden sm:inline">Baixar Original</span><span className="sm:hidden">Baixar</span>
           </button>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-8">
-        <div className="grid md:grid-cols-3 gap-8">
+      <main className="max-w-4xl mx-auto p-4 md:p-8">
+        <div className="flex flex-col md:grid md:grid-cols-3 gap-6 md:gap-8">
           {/* Document Preview */}
-          <div className="md:col-span-2 space-y-6">
+          <div className="md:col-span-2 space-y-6 order-2 md:order-1">
             {doc?.ai_analysis ? (
               <div className="bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
                 <button 
@@ -393,16 +395,16 @@ export default function SignDocument({ profile }: SignDocumentProps) {
               </div>
             )}
 
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[600px] flex flex-col">
-              <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Visualização do Documento</span>
-                <span className="text-xs text-slate-400">Página 1 de 1</span>
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px] md:min-h-[600px] flex flex-col">
+              <div className="bg-slate-50 p-3 md:p-4 border-b border-slate-100 flex justify-between items-center">
+                <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Visualização do Documento</span>
+                <span className="text-[10px] md:text-xs text-slate-400">Página 1 de 1</span>
               </div>
-              <div className="flex-1 p-8 md:p-12 flex flex-col items-center justify-start space-y-6 overflow-y-auto max-h-[800px] scroll-smooth">
+              <div className="flex-1 p-4 md:p-12 flex flex-col items-center justify-start space-y-6 overflow-y-auto max-h-[500px] md:max-h-[800px] scroll-smooth">
                 {doc?.content ? (
-                  <div className="text-left w-full space-y-4">
-                    <h3 className="text-xl font-bold text-slate-900 border-b pb-4 mb-6">{doc.title}</h3>
-                    <div className="prose prose-slate max-w-none text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">
+                  <div className="text-left w-full space-y-4 overflow-x-hidden">
+                    <h3 className="text-lg md:text-xl font-bold text-slate-900 border-b pb-4 mb-6 break-words">{doc.title}</h3>
+                    <div className="prose prose-slate max-w-none text-slate-700 whitespace-pre-wrap font-sans leading-relaxed text-sm md:text-base break-words">
                       {doc.content}
                     </div>
                   </div>
@@ -429,8 +431,8 @@ export default function SignDocument({ profile }: SignDocumentProps) {
           </div>
 
           {/* Signature Pad */}
-          <div className="space-y-6">
-            <div className="card sticky top-24">
+          <div className="space-y-6 order-1 md:order-2">
+            <div className="card md:sticky md:top-24">
               <div className="flex items-center gap-2 mb-6">
                 <ShieldCheck className="w-5 h-5 text-emerald-500" />
                 <h3 className="font-bold text-slate-900">Assinar Documento</h3>
