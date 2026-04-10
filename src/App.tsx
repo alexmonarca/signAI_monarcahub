@@ -8,6 +8,7 @@ import DocumentDetails from './pages/DocumentDetails';
 import CreateContract from './pages/CreateContract';
 import SignDocument from './pages/SignDocument';
 import Settings from './pages/Settings';
+import Analytics from './pages/Analytics';
 import { UserProfile } from './types';
 
 export default function App() {
@@ -117,6 +118,10 @@ export default function App() {
         <Route 
           path="/settings" 
           element={session ? <Settings profile={profile} /> : <Navigate to="/auth" />} 
+        />
+        <Route 
+          path="/analytics" 
+          element={session ? <Analytics profile={profile} /> : <Navigate to="/auth" />} 
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

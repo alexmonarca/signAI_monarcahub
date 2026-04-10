@@ -26,6 +26,7 @@ export interface Document {
   signed_at?: string;
   signature_method?: 'draw' | 'upload' | 'document';
   signature_details?: string;
+  copy_requested?: boolean;
 }
 
 export const PLAN_LIMITS = {

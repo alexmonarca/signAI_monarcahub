@@ -70,9 +70,17 @@ export default function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
           <Sparkles className={`w-5 h-5 ${isActive('/create-contract') ? 'text-blue-400' : 'text-slate-400 group-hover:text-blue-500'}`} /> 
           <span>Criar Contrato <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-md ml-1 font-bold">IA</span></span>
         </Link>
-        <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl font-medium transition-all group text-left">
-          <TrendingUp className="w-5 h-5 text-slate-400 group-hover:text-slate-900" /> Analytics
-        </button>
+        <Link 
+          to="/analytics" 
+          onClick={onClose}
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all group ${
+            isActive('/analytics') 
+              ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' 
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <TrendingUp className={`w-5 h-5 ${isActive('/analytics') ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'}`} /> Analytics
+        </Link>
         <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl font-medium transition-all group text-left">
           <Users className="w-5 h-5 text-slate-400 group-hover:text-slate-900" /> Equipe
         </button>

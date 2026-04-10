@@ -192,6 +192,7 @@ export default function SignDocument({ profile }: SignDocumentProps) {
     if (!copyEmail) return;
     setIsSendingCopy(true);
     try {
+      // 1. Notify owner/signer via webhook
       await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -203,6 +204,13 @@ export default function SignDocument({ profile }: SignDocumentProps) {
           is_copy_request: true
         })
       });
+
+      // 2. Update database to track that copy was requested
+      await supabase
+        .from('documents')
+        .update({ copy_requested: true })
+        .eq('id', id);
+
       setCopySent(true);
     } catch (err) {
       console.error('Error sending copy:', err);
