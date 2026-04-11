@@ -374,8 +374,8 @@ export default function Dashboard({ profile }: DashboardProps) {
                         <FileText className="w-6 h-6" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-slate-900 truncate group-hover:text-slate-900 transition-colors">
-                          {doc.title.length > 15 ? `${doc.title.substring(0, 15)}...` : doc.title}
+                        <h4 className="font-bold text-slate-900 truncate group-hover:text-slate-900 transition-colors max-w-[150px] sm:max-w-none">
+                          {doc.title}
                         </h4>
                         <div className="flex items-center gap-4 mt-1.5">
                           <span className="text-xs font-medium text-slate-400 flex items-center gap-1">

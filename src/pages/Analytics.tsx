@@ -173,7 +173,7 @@ export default function Analytics({ profile }: AnalyticsProps) {
                           <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center group-hover:bg-white transition-colors">
                             <FileText className="w-4 h-4 text-slate-500" />
                           </div>
-                          <span className="text-sm font-bold text-slate-900 truncate max-w-[150px]">{doc.title}</span>
+                          <span className="text-sm font-bold text-slate-900 truncate max-w-[120px] sm:max-w-[300px]">{doc.title}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
