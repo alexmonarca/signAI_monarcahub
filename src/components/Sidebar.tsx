@@ -14,6 +14,7 @@ import {
 import { UserProfile, PLAN_LIMITS } from '../types';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
+import Logo from './Logo';
 
 interface SidebarProps {
   profile: UserProfile | null;
@@ -33,11 +34,8 @@ export default function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-6 flex items-center justify-between">
-        <Link to="/dashboard" className="flex items-center gap-2" onClick={onClose}>
-          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-            <FileText className="text-white w-5 h-5" />
-          </div>
-          <span className="text-xl font-display font-bold">Sign AI</span>
+        <Link to="/dashboard" onClick={onClose}>
+          <Logo size="md" />
         </Link>
         {onClose && (
           <button onClick={onClose} className="lg:hidden p-2 hover:bg-slate-100 rounded-xl transition-colors">

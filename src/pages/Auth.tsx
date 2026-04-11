@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { FileText, Mail, Lock, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
+import Logo from '../components/Logo';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -54,9 +55,7 @@ export default function Auth() {
           </Link>
 
           <div className="mb-10">
-            <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mb-6">
-              <FileText className="text-white w-6 h-6" />
-            </div>
+            <Logo size="lg" className="mb-6" />
             <h1 className="text-3xl font-display font-bold mb-2">
               {isSignUp ? 'Criar sua conta' : 'Bem-vindo de volta'}
             </h1>
@@ -161,7 +160,7 @@ export default function Auth() {
             transition={{ duration: 0.5 }}
           >
             <div className="glass p-8 rounded-3xl mb-8 inline-block">
-              <FileText className="w-16 h-16 text-slate-900" />
+              <Logo size="lg" />
             </div>
             <h2 className="text-4xl font-display font-bold text-white mb-4">
               A revolução das assinaturas digitais

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Check, Shield, Zap, FileText, ArrowRight, BrainCircuit, Palette, X, Copy, ExternalLink, Globe } from 'lucide-react';
 import { UserProfile, PLAN_PRICES } from '../types';
+import Logo from '../components/Logo';
 
 type Currency = 'BRL' | 'USD' | 'EUR';
 
@@ -253,12 +254,9 @@ export default function Landing({ profile }: LandingProps) {
           <div className="flex justify-between min-h-[4rem] sm:h-16 items-center py-2 sm:py-0">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-8">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-                    <FileText className="text-white w-5 h-5" />
-                  </div>
-                  <span className="text-xl font-display font-bold tracking-tight">Sign AI</span>
-                </div>
+                <Link to="/" className="flex items-center">
+                  <Logo size="md" />
+                </Link>
                 
                 {/* Flags - Desktop: Right of logo */}
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-100">
@@ -463,12 +461,7 @@ export default function Landing({ profile }: LandingProps) {
       {/* Footer */}
       <footer className="py-12 border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-slate-900 rounded flex items-center justify-center">
-              <FileText className="text-white w-4 h-4" />
-            </div>
-            <span className="font-display font-bold">Sign AI</span>
-          </div>
+          <Logo size="sm" />
           <p className="text-slate-500 text-sm">{translations[currency].footerCopyright}</p>
           <div className="flex gap-6 text-sm text-slate-600">
             <a href="https://www.monarcahub.com/privacy-policy/" target="_blank" rel="noopener noreferrer" className="hover:text-slate-900">{translations[currency].footerTerms}</a>
