@@ -30,7 +30,7 @@ export default function Auth() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ 
+        const { data: signUpData, error } = await supabase.auth.signUp({ 
           email, 
           password,
           options: {
@@ -40,6 +40,18 @@ export default function Auth() {
           }
         });
         if (error) throw error;
+
+        // Manually ensure profile is created/updated
+        if (signUpData.user) {
+          await supabase.from('profiles').upsert({
+            id: signUpData.user.id,
+            email: email,
+            full_name: fullName,
+            plan: 'free',
+            docs_this_month: 0
+          });
+        }
+        
         navigate('/dashboard');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

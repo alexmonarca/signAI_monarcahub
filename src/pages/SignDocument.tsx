@@ -115,6 +115,8 @@ export default function SignDocument({ profile }: SignDocumentProps) {
 
     try {
       const signedAt = new Date().toISOString();
+      const signerEmail = profile?.email || 'Public User';
+      
       const { error } = await supabase
         .from('documents')
         .update({ 
@@ -122,7 +124,8 @@ export default function SignDocument({ profile }: SignDocumentProps) {
           signature_data: signatureData,
           signed_at: signedAt,
           signature_method: signatureMethod,
-          signature_details: signatureDetails
+          signature_details: signatureDetails,
+          signer_email: signerEmail
         })
         .eq('id', id);
 
@@ -136,7 +139,7 @@ export default function SignDocument({ profile }: SignDocumentProps) {
         signature_method: signatureMethod,
         signature_details: signatureDetails,
         owner_id: doc?.owner_id,
-        signer_email: profile?.email || 'Public User'
+        signer_email: signerEmail
       };
       
       console.log('Enviando webhook de assinatura:', webhookPayload);
@@ -158,12 +161,7 @@ export default function SignDocument({ profile }: SignDocumentProps) {
       }
 
       setIsSigned(true);
-      // Only navigate if user is logged in
-      if (profile) {
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
-      }
+      // Removed automatic navigation to allow user to choose to receive copy by email
     } catch (err) {
       console.error('Error saving signature:', err);
       alert('Erro ao salvar assinatura.');
@@ -223,7 +221,7 @@ export default function SignDocument({ profile }: SignDocumentProps) {
           return;
         }
 
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: copyEmail,
           password: copyPassword,
           options: {
@@ -234,6 +232,17 @@ export default function SignDocument({ profile }: SignDocumentProps) {
         });
 
         if (signUpError) throw signUpError;
+
+        // Manually ensure profile is created/updated with correct info
+        if (signUpData.user) {
+          await supabase.from('profiles').upsert({
+            id: signUpData.user.id,
+            email: copyEmail,
+            full_name: copyName,
+            plan: 'free',
+            docs_this_month: 0
+          });
+        }
       }
 
       const copyPayload = {
