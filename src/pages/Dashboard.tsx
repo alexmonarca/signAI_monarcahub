@@ -127,16 +127,15 @@ export default function Dashboard({ profile }: DashboardProps) {
         fileUrl = publicUrl;
       }
 
-      // 2. Extract text and analyze if PDF
+      // 2. Extract text if PDF (needed for search and future analysis)
       const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
       if (isPDF) {
         try {
           content = await extractTextFromPDF(file);
-          aiAnalysis = await analyzeContract(content);
+          // AI Analysis is now manual, triggered by the user in the details page
         } catch (err: any) {
-          console.error('AI Analysis failed:', err);
-          // We continue anyway, but log it
+          console.error('Text extraction failed:', err);
         }
       } else {
         console.log('Arquivo não é PDF, pulando extração de texto.');
@@ -150,7 +149,7 @@ export default function Dashboard({ profile }: DashboardProps) {
           title: file.name,
           status: 'pending',
           content: content,
-          ai_analysis: aiAnalysis,
+          ai_analysis: null, // Always null on upload now
           file_url: fileUrl
         }])
         .select()

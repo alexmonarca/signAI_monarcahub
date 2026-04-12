@@ -15,6 +15,14 @@ export default function Auth() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get('email');
+    const signupParam = params.get('signup');
+    if (emailParam) setEmail(emailParam);
+    if (signupParam === 'true') setIsSignUp(true);
+  }, []);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

@@ -199,15 +199,19 @@ export default function SignDocument({ profile }: SignDocumentProps) {
   };
 
   const handleSendCopy = async () => {
-    if (!copyEmail) return;
+    const emailToUse = profile?.email || copyEmail;
+    if (!emailToUse) return;
     setIsSendingCopy(true);
     
     const copyPayload = {
       document_id: id,
       document_title: doc?.title,
       signed_at: new Date().toISOString(),
-      send_copy_to: copyEmail,
-      is_copy_request: true
+      send_copy_to: emailToUse,
+      is_copy_request: true,
+      file_url: doc?.file_url,
+      signature_data: doc?.signature_data,
+      content: doc?.content
     };
 
     console.log('Solicitando cópia via webhook:', copyPayload);
@@ -261,25 +265,47 @@ export default function SignDocument({ profile }: SignDocumentProps) {
                 <Mail className="w-4 h-4 text-blue-500" />
                 Deseja receber uma cópia?
               </h4>
-              <p className="text-[10px] md:text-xs text-slate-500 mb-4">
-                Informe seu e-mail abaixo para receber o documento assinado.
-              </p>
-              <div className="flex flex-col gap-2">
-                <input 
-                  type="email" 
-                  placeholder="seu@email.com"
-                  value={copyEmail}
-                  onChange={(e) => setCopyEmail(e.target.value)}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                />
-                <button 
-                  onClick={handleSendCopy}
-                  disabled={isSendingCopy || !copyEmail}
-                  className="w-full px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-50 whitespace-nowrap"
-                >
-                  {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Enviar Cópia'}
-                </button>
-              </div>
+              
+              {profile ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-[10px] md:text-xs text-slate-500 mb-4">
+                    Enviaremos o documento assinado para seu e-mail: <strong>{profile.email}</strong>
+                  </p>
+                  <button 
+                    onClick={handleSendCopy}
+                    disabled={isSendingCopy}
+                    className="w-full px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Enviar para meu e-mail'}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <p className="text-[10px] md:text-xs text-slate-500">
+                    Crie uma conta gratuita para receber sua cópia e gerenciar seus documentos.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <input 
+                      type="email" 
+                      placeholder="seu@email.com"
+                      value={copyEmail}
+                      onChange={(e) => setCopyEmail(e.target.value)}
+                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    />
+                    <button 
+                      onClick={async () => {
+                        if (!copyEmail) return;
+                        await handleSendCopy();
+                        navigate(`/auth?signup=true&email=${encodeURIComponent(copyEmail)}&docId=${id}`);
+                      }}
+                      disabled={isSendingCopy || !copyEmail}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap flex items-center justify-center gap-2"
+                    >
+                      {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4" /> Criar Conta e Receber Cópia</>}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="mb-8 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 text-xs md:text-sm flex items-center gap-2 justify-center">

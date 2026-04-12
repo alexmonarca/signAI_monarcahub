@@ -24,6 +24,7 @@ import {
 import { motion } from 'motion/react';
 import Sidebar from '../components/Sidebar';
 import { handleDocumentDownload } from '../lib/download';
+import { analyzeContract } from '../lib/ai';
 
 interface DocumentDetailsProps {
   profile: UserProfile | null;
@@ -39,6 +40,7 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
   const [inviteSuccess, setInviteSuccess] = useState(false);
   const [isSendingCopy, setIsSendingCopy] = useState(false);
   const [copySent, setCopySent] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     if (id) fetchDocument();
@@ -145,6 +147,32 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
     }
   };
 
+  const handleAnalyzeManually = async () => {
+    if (!document?.content) {
+      alert('Não foi possível extrair texto deste documento para análise.');
+      return;
+    }
+    
+    setIsAnalyzing(true);
+    try {
+      const analysis = await analyzeContract(document.content);
+      if (analysis) {
+        const { error } = await supabase
+          .from('documents')
+          .update({ ai_analysis: analysis })
+          .eq('id', document.id);
+        
+        if (error) throw error;
+        setDocument({ ...document, ai_analysis: analysis });
+      }
+    } catch (err) {
+      console.error('Error analyzing contract manually:', err);
+      alert('Erro ao realizar análise IA.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -232,10 +260,22 @@ export default function DocumentDetails({ profile }: DocumentDetailsProps) {
                     </div>
                     <div>
                       <h3 className="font-bold">Análise Inteligente (Sign AI)</h3>
-                      <p className="text-xs text-slate-400">Processado pelo Gemini 3 Flash</p>
+                      <p className="text-xs text-slate-400">Processado pelo Gemini 1.5 Flash</p>
                     </div>
                   </div>
-                  <Zap className="w-5 h-5 text-amber-400 animate-pulse" />
+                  <div className="flex items-center gap-4">
+                    {!document.ai_analysis && (
+                      <button 
+                        onClick={handleAnalyzeManually}
+                        disabled={isAnalyzing}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all disabled:opacity-50 shadow-lg shadow-blue-600/20"
+                      >
+                        {isAnalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                        {isAnalyzing ? 'Analisando...' : 'Análise IA'}
+                      </button>
+                    )}
+                    <Zap className="w-5 h-5 text-amber-400 animate-pulse" />
+                  </div>
                 </div>
 
                 <div className="p-8 space-y-8">
