@@ -3,19 +3,24 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { Document } from '../types';
 
 export const handleDocumentDownload = async (doc: Document) => {
+  console.log('Iniciando download do documento:', { id: doc.id, title: doc.title, status: doc.status, hasFileUrl: !!doc.file_url });
+  
   // If it's signed, we append a signature certificate to the original PDF
-  if (doc.status === 'signed' && doc.file_url) {
+  const isPDF = doc.file_url?.toLowerCase().endsWith('.pdf') || doc.title.toLowerCase().endsWith('.pdf');
+
+  if (doc.status === 'signed' && doc.file_url && isPDF) {
     try {
+      console.log('Documento assinado e PDF detectado, tentando gerar PDF com certificado...');
       await generateSignedPDFWithOriginal(doc);
       return;
     } catch (err) {
-      console.error('Error generating signed PDF with original, falling back to basic:', err);
-      // Fallback to basic if something goes wrong with pdf-lib
+      console.error('Erro ao gerar PDF assinado com original, tentando fallback para original puro:', err);
     }
   }
 
-  // If not signed and has original file, download original
+  // If we have an original file URL, always prefer it over generated PDF
   if (doc.file_url) {
+    console.log('Baixando arquivo original via URL:', doc.file_url);
     const link = document.createElement('a');
     link.href = doc.file_url;
     link.download = doc.title;
@@ -26,29 +31,33 @@ export const handleDocumentDownload = async (doc: Document) => {
     return;
   }
 
-  // Fallback for pending docs without file_url or if signed generation failed
+  // Fallback for docs without file_url (e.g. manual text entry or legacy docs)
+  console.log('Nenhuma URL de arquivo encontrada, gerando PDF básico a partir do conteúdo textual.');
   generateBasicPDF(doc);
 };
 
 const generateSignedPDFWithOriginal = async (doc: Document) => {
   if (!doc.file_url) throw new Error('No file URL available');
 
+  console.log('Buscando arquivo original para processamento...');
   // 1. Fetch the original PDF
-  const response = await fetch(doc.file_url);
+  const response = await fetch(doc.file_url, { mode: 'cors' });
+  if (!response.ok) throw new Error(`Falha ao buscar arquivo: ${response.statusText}`);
   const originalPdfBytes = await response.arrayBuffer();
 
+  console.log('Arquivo original carregado, processando com pdf-lib...');
   // 2. Load the original PDF with pdf-lib
   const pdfDoc = await PDFDocument.load(originalPdfBytes);
-  const pages = pdfDoc.getPages();
   
-  // 3. Add a new page for the Signature Certificate
+  // 3. Add a new page for the Signature Certificate (Standard practice for digital signatures)
+  // This ensures we don't overwrite any important content on the original pages
   const certificatePage = pdfDoc.addPage([595.28, 841.89]); // A4 size
   const { width, height } = certificatePage.getSize();
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontItalic = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
-  // 4. Draw Header
+  console.log('Adicionando selo e informações de auditoria...');
   certificatePage.drawText('Certificado de Assinatura Digital', {
     x: 50,
     y: height - 60,

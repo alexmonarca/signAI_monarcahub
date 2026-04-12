@@ -65,11 +65,17 @@ export default function Auth() {
           <div className="mb-10">
             <Logo size="lg" className="mb-6" />
             <h1 className="text-3xl font-display font-bold mb-2">
-              {isSignUp ? 'Criar sua conta' : 'Bem-vindo de volta'}
+              {isSignUp ? (
+                new URLSearchParams(window.location.search).get('fromSign') === 'true' 
+                  ? 'Finalize seu cadastro' 
+                  : 'Criar sua conta'
+              ) : 'Bem-vindo de volta'}
             </h1>
             <p className="text-slate-600">
               {isSignUp 
-                ? 'Comece a assinar seus documentos hoje mesmo.' 
+                ? (new URLSearchParams(window.location.search).get('fromSign') === 'true'
+                    ? 'Só mais um passo para acessar seus documentos e sua cópia assinada.'
+                    : 'Comece a assinar seus documentos hoje mesmo.')
                 : 'Acesse sua conta para gerenciar suas assinaturas.'}
             </p>
           </div>

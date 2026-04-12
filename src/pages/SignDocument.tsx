@@ -282,27 +282,34 @@ export default function SignDocument({ profile }: SignDocumentProps) {
               ) : (
                 <div className="flex flex-col gap-4">
                   <p className="text-[10px] md:text-xs text-slate-500">
-                    Crie uma conta gratuita para receber sua cópia e gerenciar seus documentos.
+                    Crie sua conta para receber sua cópia e gerenciar seus documentos com validade jurídica.
                   </p>
                   <div className="flex flex-col gap-2">
                     <input 
                       type="email" 
-                      placeholder="seu@email.com"
+                      placeholder="Seu melhor e-mail"
                       value={copyEmail}
                       onChange={(e) => setCopyEmail(e.target.value)}
-                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                     <button 
                       onClick={async () => {
-                        if (!copyEmail) return;
+                        if (!copyEmail) {
+                          alert('Por favor, insira seu e-mail.');
+                          return;
+                        }
                         await handleSendCopy();
-                        navigate(`/auth?signup=true&email=${encodeURIComponent(copyEmail)}&docId=${id}`);
+                        // Redirect to signup with email pre-filled and a clear instruction
+                        navigate(`/auth?signup=true&email=${encodeURIComponent(copyEmail)}&fromSign=true`);
                       }}
                       disabled={isSendingCopy || !copyEmail}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap flex items-center justify-center gap-2"
+                      className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4" /> Criar Conta e Receber Cópia</>}
+                      {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4" /> Receber Cópia e Criar Conta</>}
                     </button>
+                    <p className="text-[9px] text-slate-400 text-center">
+                      Ao clicar, você será direcionado para finalizar seu cadastro rápido.
+                    </p>
                   </div>
                 </div>
               )}
@@ -418,7 +425,7 @@ export default function SignDocument({ profile }: SignDocumentProps) {
                   )}
                 </AnimatePresence>
               </div>
-            ) : (
+            ) : profile ? (
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
@@ -438,6 +445,24 @@ export default function SignDocument({ profile }: SignDocumentProps) {
                   Resumir agora
                 </button>
               </div>
+            ) : (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex items-center justify-between opacity-75 grayscale-[0.5]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <BrainCircuit className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-700">Análise IA (Exclusivo)</h4>
+                    <p className="text-[10px] text-slate-500">Crie uma conta gratuita para usar o Analista IA.</p>
+                  </div>
+                </div>
+                <Link 
+                  to="/auth?signup=true"
+                  className="btn-secondary py-2 px-4 text-[10px] font-bold"
+                >
+                  Criar Conta
+                </Link>
+              </div>
             )}
 
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px] md:min-h-[600px] flex flex-col">
@@ -445,31 +470,32 @@ export default function SignDocument({ profile }: SignDocumentProps) {
                 <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Visualização do Documento</span>
                 <span className="text-[10px] md:text-xs text-slate-400">Página 1 de 1</span>
               </div>
-              <div className="flex-1 p-4 md:p-12 flex flex-col items-center justify-start space-y-6 overflow-y-auto max-h-[500px] md:max-h-[800px] scroll-smooth">
-                {doc?.content ? (
-                  <div className="text-left w-full space-y-4 overflow-x-hidden">
-                    <h3 className="text-lg md:text-xl font-bold text-slate-900 border-b pb-4 mb-6 break-words">{doc.title}</h3>
-                    <div className="prose prose-slate max-w-none text-slate-700 whitespace-pre-wrap font-sans leading-relaxed text-sm md:text-base break-words">
-                      {doc.content}
+              <div className="flex-1 p-0 flex flex-col items-center justify-start overflow-hidden">
+                {doc?.file_url ? (
+                  <iframe 
+                    src={`${doc.file_url}#toolbar=0`}
+                    className="w-full h-full min-h-[500px] md:min-h-[800px] border-none"
+                    title="Document Preview"
+                  />
+                ) : doc?.content ? (
+                  <div className="p-4 md:p-12 w-full space-y-4 overflow-y-auto max-h-[500px] md:max-h-[800px] scroll-smooth">
+                    <div className="text-left w-full space-y-4 overflow-x-hidden">
+                      <h3 className="text-lg md:text-xl font-bold text-slate-900 border-b pb-4 mb-6 break-words">{doc.title}</h3>
+                      <div className="prose prose-slate max-w-none text-slate-700 whitespace-pre-wrap font-sans leading-relaxed text-sm md:text-base break-words">
+                        {doc.content}
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <>
+                  <div className="p-4 md:p-12 flex flex-col items-center justify-center space-y-6">
                     <FileText className="w-24 h-24 text-slate-100" />
-                    <div className="max-w-sm space-y-2">
+                    <div className="max-w-sm space-y-2 text-center">
                       <h3 className="text-xl font-bold text-slate-900">{doc?.title}</h3>
                       <p className="text-slate-500 text-sm">
-                        Este é um ambiente de demonstração. Em uma aplicação real, o PDF seria renderizado aqui para sua revisão antes da assinatura.
+                        Visualização não disponível.
                       </p>
                     </div>
-                    <div className="w-full h-px bg-slate-100 my-8"></div>
-                    <div className="w-full text-left space-y-4">
-                      <div className="h-4 bg-slate-50 rounded w-3/4"></div>
-                      <div className="h-4 bg-slate-50 rounded w-full"></div>
-                      <div className="h-4 bg-slate-50 rounded w-5/6"></div>
-                      <div className="h-4 bg-slate-50 rounded w-2/3"></div>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
