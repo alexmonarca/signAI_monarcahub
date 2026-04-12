@@ -40,7 +40,7 @@ export default function Auth() {
           }
         });
         if (error) throw error;
-        alert('Verifique seu email para confirmar o cadastro!');
+        navigate('/dashboard');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

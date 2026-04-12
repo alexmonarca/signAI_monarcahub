@@ -40,6 +40,9 @@ export default function SignDocument({ profile }: SignDocumentProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [copyEmail, setCopyEmail] = useState('');
+  const [copyName, setCopyName] = useState('');
+  const [copyPassword, setCopyPassword] = useState('');
+  const [showSignupFields, setShowSignupFields] = useState(false);
   const [isSendingCopy, setIsSendingCopy] = useState(false);
   const [copySent, setCopySent] = useState(false);
   const sigPad = useRef<any>(null);
@@ -201,22 +204,45 @@ export default function SignDocument({ profile }: SignDocumentProps) {
   const handleSendCopy = async () => {
     const emailToUse = profile?.email || copyEmail;
     if (!emailToUse) return;
+    
     setIsSendingCopy(true);
     
-    const copyPayload = {
-      document_id: id,
-      document_title: doc?.title,
-      signed_at: new Date().toISOString(),
-      send_copy_to: emailToUse,
-      is_copy_request: true,
-      file_url: doc?.file_url,
-      signature_data: doc?.signature_data,
-      content: doc?.content
-    };
-
-    console.log('Solicitando cópia via webhook:', copyPayload);
-
     try {
+      // If not logged in and showing signup fields, create account first
+      if (!profile && showSignupFields) {
+        if (!copyName || !copyPassword) {
+          alert('Por favor, preencha seu nome e senha para criar sua conta.');
+          setIsSendingCopy(false);
+          return;
+        }
+
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: copyEmail,
+          password: copyPassword,
+          options: {
+            data: {
+              full_name: copyName
+            }
+          }
+        });
+
+        if (signUpError) throw signUpError;
+      }
+
+      const copyPayload = {
+        document_id: id,
+        document_title: doc?.title,
+        signed_at: new Date().toISOString(),
+        send_copy_to: emailToUse,
+        is_copy_request: true,
+        file_url: doc?.file_url,
+        signature_data: doc?.signature_data,
+        content: doc?.content,
+        full_name: copyName || profile?.full_name
+      };
+
+      console.log('Solicitando cópia via webhook:', copyPayload);
+
       // 1. Notify owner/signer via webhook
       const response = await fetch('https://webhook.monarcahub.com/webhook/doc-signed', {
         method: 'POST',
@@ -235,9 +261,14 @@ export default function SignDocument({ profile }: SignDocumentProps) {
         .eq('id', id);
 
       setCopySent(true);
-    } catch (err) {
-      console.error('Error sending copy:', err);
-      alert('Erro ao solicitar cópia.');
+      
+      // If we just created an account, we might want to tell them or redirect
+      if (!profile && showSignupFields) {
+        alert('Conta criada e cópia solicitada com sucesso!');
+      }
+    } catch (err: any) {
+      console.error('Error sending copy/signing up:', err);
+      alert(err.message || 'Erro ao processar sua solicitação.');
     } finally {
       setIsSendingCopy(false);
     }
@@ -282,50 +313,79 @@ export default function SignDocument({ profile }: SignDocumentProps) {
               ) : (
                 <div className="flex flex-col gap-4">
                   <p className="text-[10px] md:text-xs text-slate-500">
-                    Crie sua conta para receber sua cópia e gerenciar seus documentos com validade jurídica.
+                    {showSignupFields 
+                      ? 'Preencha seus dados para criar sua conta e receber a cópia.' 
+                      : 'Crie sua conta para receber sua cópia e gerenciar seus documentos com validade jurídica.'}
                   </p>
-                  <div className="flex flex-col gap-2">
-                    <input 
-                      type="email" 
-                      placeholder="Seu melhor e-mail"
-                      value={copyEmail}
-                      onChange={(e) => setCopyEmail(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                    />
-                    <button 
-                      onClick={async () => {
-                        if (!copyEmail) {
-                          alert('Por favor, insira seu e-mail.');
-                          return;
-                        }
-                        await handleSendCopy();
-                        // Redirect to signup with email pre-filled and a clear instruction
-                        navigate(`/auth?signup=true&email=${encodeURIComponent(copyEmail)}&fromSign=true`);
-                      }}
-                      disabled={isSendingCopy || !copyEmail}
-                      className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4" /> Receber Cópia e Criar Conta</>}
-                    </button>
-                    <p className="text-[9px] text-slate-400 text-center">
-                      Ao clicar, você será direcionado para finalizar seu cadastro rápido.
-                    </p>
+                  <div className="flex flex-col gap-3">
+                    {!showSignupFields ? (
+                      <>
+                        <input 
+                          type="email" 
+                          placeholder="Seu melhor e-mail"
+                          value={copyEmail}
+                          onChange={(e) => setCopyEmail(e.target.value)}
+                          className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        />
+                        <button 
+                          onClick={() => {
+                            if (!copyEmail) {
+                              alert('Por favor, insira seu e-mail.');
+                              return;
+                            }
+                            setShowSignupFields(true);
+                          }}
+                          className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
+                        >
+                          Continuar para Receber Cópia
+                        </button>
+                      </>
+                    ) : (
+                      <div className="space-y-3">
+                        <div>
+                          <input 
+                            type="text" 
+                            placeholder="Seu nome completo"
+                            value={copyName}
+                            onChange={(e) => setCopyName(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          />
+                        </div>
+                        <div>
+                          <input 
+                            type="password" 
+                            placeholder="Crie uma senha"
+                            value={copyPassword}
+                            onChange={(e) => setCopyPassword(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          />
+                        </div>
+                        <button 
+                          onClick={handleSendCopy}
+                          disabled={isSendingCopy}
+                          className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          {isSendingCopy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4" /> Finalizar e Receber Cópia</>}
+                        </button>
+                        <button 
+                          onClick={() => setShowSignupFields(false)}
+                          className="w-full text-[10px] text-slate-400 hover:text-slate-600 font-bold uppercase tracking-wider"
+                        >
+                          Voltar
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           ) : (
             <div className="mb-8 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 text-xs md:text-sm flex items-center gap-2 justify-center">
-              <Check className="w-4 h-4" /> Cópia solicitada com sucesso!
+              <Check className="w-4 h-4" /> Cópia solicitada e conta criada!
             </div>
           )}
 
           <div className="space-y-3">
-            {!profile && (
-              <Link to="/auth" className="btn-primary w-full py-3 block text-sm">
-                Criar minha conta grátis
-              </Link>
-            )}
             {profile && (
               <Link to="/dashboard" className="btn-primary w-full py-3 block text-sm">
                 Voltar ao Painel
