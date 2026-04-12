@@ -61,6 +61,13 @@ export default function SignDocument({ profile }: SignDocumentProps) {
 
       if (error) throw error;
       
+      console.log('Documento carregado:', {
+        id: data.id,
+        title: data.title,
+        hasFileUrl: !!data.file_url,
+        fileUrl: data.file_url
+      });
+      
       setDoc(data);
     } catch (err) {
       console.error('Error fetching document:', err);
@@ -530,13 +537,29 @@ export default function SignDocument({ profile }: SignDocumentProps) {
                 <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Visualização do Documento</span>
                 <span className="text-[10px] md:text-xs text-slate-400">Página 1 de 1</span>
               </div>
-              <div className="flex-1 p-0 flex flex-col items-center justify-start overflow-hidden">
+              <div className="flex-1 p-0 flex flex-col items-center justify-start overflow-hidden bg-slate-100 relative min-h-[500px] md:min-h-[800px]">
                 {doc?.file_url ? (
-                  <iframe 
-                    src={`${doc.file_url}#toolbar=0`}
-                    className="w-full h-full min-h-[500px] md:min-h-[800px] border-none"
-                    title="Document Preview"
-                  />
+                  <>
+                    <iframe 
+                      src={`${doc.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
+                      className="w-full h-full absolute inset-0 border-none z-10"
+                      title="Document Preview"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-0">
+                      <div className="text-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-slate-300 mx-auto mb-2" />
+                        <p className="text-xs text-slate-400 font-medium">Carregando visualização do PDF...</p>
+                        <a 
+                          href={doc.file_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-blue-500 hover:underline mt-4 inline-block font-bold"
+                        >
+                          Não carregou? Clique para abrir o original
+                        </a>
+                      </div>
+                    </div>
+                  </>
                 ) : doc?.content ? (
                   <div className="p-4 md:p-12 w-full space-y-4 overflow-y-auto max-h-[500px] md:max-h-[800px] scroll-smooth">
                     <div className="text-left w-full space-y-4 overflow-x-hidden">

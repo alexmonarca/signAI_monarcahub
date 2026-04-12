@@ -117,9 +117,15 @@ export default function Dashboard({ profile }: DashboardProps) {
 
       if (uploadError) {
         console.error('Storage upload error:', uploadError);
+        let errorMsg = 'Erro ao fazer upload do arquivo original.';
+        
         if (uploadError.message.includes('bucket not found')) {
-          alert('Aviso: O bucket "documents" não foi encontrado no Supabase Storage. O arquivo original não será salvo para download, apenas o texto extraído.');
+          errorMsg = 'O bucket "documents" não foi encontrado no seu Supabase Storage. Por favor, crie um bucket chamado "documents" e defina-o como PÚBLICO para que a visualização funcione.';
+        } else if (uploadError.message.includes('Permission denied')) {
+          errorMsg = 'Permissão negada ao fazer upload. Verifique se o bucket "documents" é público ou se as políticas de RLS permitem o upload.';
         }
+        
+        alert(`Aviso: ${errorMsg}\n\nO documento será salvo apenas com o texto extraído para análise.`);
       } else {
         const { data: { publicUrl } } = supabase.storage
           .from('documents')
