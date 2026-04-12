@@ -116,16 +116,18 @@ export default function Dashboard({ profile }: DashboardProps) {
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Storage upload error:', uploadError);
+        console.error('Storage upload error details:', uploadError);
         let errorMsg = 'Erro ao fazer upload do arquivo original.';
         
         if (uploadError.message.includes('bucket not found')) {
-          errorMsg = 'O bucket "documents" não foi encontrado no seu Supabase Storage. Por favor, crie um bucket chamado "documents" e defina-o como PÚBLICO para que a visualização funcione.';
-        } else if (uploadError.message.includes('Permission denied')) {
-          errorMsg = 'Permissão negada ao fazer upload. Verifique se o bucket "documents" é público ou se as políticas de RLS permitem o upload.';
+          errorMsg = 'O bucket "documents" não foi encontrado no seu Supabase Storage. Por favor, crie um bucket chamado "documents" e defina-o como PÚBLICO.';
+        } else if (uploadError.message.includes('Permission denied') || uploadError.message.includes('row-level security')) {
+          errorMsg = 'Permissão negada (RLS). No seu Supabase Self-Hosted, você precisa adicionar uma política (Policy) na tabela "storage.objects" que permita INSERT para usuários autenticados ou anônimos no bucket "documents".';
+        } else {
+          errorMsg = `Erro técnico: ${uploadError.message}`;
         }
         
-        alert(`Aviso: ${errorMsg}\n\nO documento será salvo apenas com o texto extraído para análise.`);
+        alert(`Aviso de Armazenamento: ${errorMsg}\n\nO documento será salvo apenas com o texto extraído.`);
       } else {
         const { data: { publicUrl } } = supabase.storage
           .from('documents')
